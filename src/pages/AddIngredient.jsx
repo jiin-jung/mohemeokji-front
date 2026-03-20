@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { api, getErrorMessage, USER_ID } from '../api';
 
 const AddIngredient = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -8,7 +8,6 @@ const AddIngredient = () => {
   const [currentCategory, setCurrentCategory] = useState('육류');
   const [currentSubCategory, setCurrentSubCategory] = useState('돼지');
   const navigate = useNavigate();
-  const userId = 2;
 
    const itemDb = {
     '육류': {
@@ -153,37 +152,44 @@ const AddIngredient = () => {
     const formattedDate = new Date().toISOString().split('T')[0];
     try {
       await Promise.all(tempSelected.map(item => 
-        axios.post(`http://localhost:8080/api/ingredients/${userId}`, {
+        api.post(`/api/ingredients/${USER_ID}`, {
           name: item.name, quantity: item.qty, unit: item.unit, category: item.cat, expiryDate: formattedDate
         })
       ));
       alert("냉장고 저장 완료!");
       navigate('/inventory');
-    } catch (e) { alert("저장 실패"); }
+    } catch (error) {
+      alert(getErrorMessage(error, '저장 실패'));
+    }
   };
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>재료 추가하기</h2>
+      <div style={styles.hero}>
+        <div style={styles.heroBadge}>MARKET LIST</div>
+        <h2 style={styles.title}>냉장고에 채워둘 재료를 골라볼까요?</h2>
+        <p style={styles.subtitle}>카테고리를 고르고 필요한 재료를 선택한 뒤, 수량만 가볍게 조정해서 저장해보세요.</p>
+      </div>
+
       <input style={styles.searchBar} placeholder="재료 검색..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
       
       <div style={styles.tabContainer}>
         {Object.keys(itemDb).map(cat => (
-          <button key={cat} onClick={() => setCurrentCategory(cat)} style={{...styles.tab, backgroundColor: currentCategory === cat ? '#2c3e50' : '#eee', color: currentCategory === cat ? '#fff' : '#000'}}>{cat}</button>
+          <button key={cat} onClick={() => setCurrentCategory(cat)} style={{...styles.tab, background: currentCategory === cat ? 'linear-gradient(135deg, #355d35 0%, #27492c 100%)' : '#fffdf8', color: currentCategory === cat ? '#fff' : '#3c432e', borderColor: currentCategory === cat ? '#355d35' : '#ead8b8'}}>{cat}</button>
         ))}
       </div>
 
       {currentCategory === '육류' && (
         <div style={styles.subTabContainer}>
           {Object.keys(itemDb['육류']).map(sub => (
-            <button key={sub} onClick={() => setCurrentSubCategory(sub)} style={{...styles.subTab, color: currentSubCategory === sub ? '#2c3e50' : '#888', borderBottom: currentSubCategory === sub ? '2px solid #2c3e50' : 'none'}}>{sub}</button>
+            <button key={sub} onClick={() => setCurrentSubCategory(sub)} style={{...styles.subTab, color: currentSubCategory === sub ? '#355d35' : '#877b62', borderBottom: currentSubCategory === sub ? '2px solid #355d35' : 'none'}}>{sub}</button>
           ))}
         </div>
       )}
 
       <div style={styles.grid}>
         {filteredItems.map(item => (
-          <div key={item.name} onClick={() => toggleSelect(item)} style={{...styles.card, borderColor: tempSelected.find(i => i.name === item.name) ? '#ff6b6b' : '#f0f0f0'}}>
+          <div key={item.name} onClick={() => toggleSelect(item)} style={{...styles.card, borderColor: tempSelected.find(i => i.name === item.name) ? '#da8350' : '#ebdfcf', background: tempSelected.find(i => i.name === item.name) ? 'linear-gradient(180deg, #fff4eb 0%, #ffffff 100%)' : 'linear-gradient(180deg, #fffdf8 0%, #ffffff 100%)'}}>
             <div style={styles.icon}>{item.icon}</div>
             <div style={styles.name}>{item.name}</div>
           </div>
@@ -192,6 +198,7 @@ const AddIngredient = () => {
 
       {tempSelected.length > 0 && (
         <div style={styles.bottomBar}>
+          <div style={styles.bottomBarLabel}>Selected Ingredients</div>
           <div style={styles.selectedList}>
             {tempSelected.map(item => (
               <div key={item.name} style={styles.selectedRow}>
@@ -219,27 +226,32 @@ const AddIngredient = () => {
 };
 
 const styles = {
-  container: { maxWidth: '500px', margin: '0 auto', paddingBottom: '200px', color: '#000' },
-  title: { textAlign: 'center', marginBottom: '20px', color: '#000', fontWeight: 'bold' },
-  searchBar: { width: '100%', padding: '12px', borderRadius: '15px', border: '1px solid #ddd', marginBottom: '20px', boxSizing: 'border-box', color: '#000' },
-  tabContainer: { display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px', flexWrap: 'wrap' },
-  tab: { padding: '8px 12px', border: 'none', borderRadius: '20px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.85rem' },
-  subTabContainer: { display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '20px', borderBottom: '1px solid #eee' },
-  subTab: { padding: '5px 10px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' },
-  card: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '15px 5px', backgroundColor: '#fff', borderRadius: '15px', border: '2px solid', cursor: 'pointer' },
-  icon: { fontSize: '2rem' },
-  name: { fontSize: '0.75rem', fontWeight: 'bold', color: '#000', textAlign: 'center' },
-  bottomBar: { position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '500px', backgroundColor: '#fff', padding: '20px', borderRadius: '20px 20px 0 0', boxShadow: '0 -5px 15px rgba(0,0,0,0.1)' },
-  selectedRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
-  rowName: { fontSize: '0.9rem', fontWeight: 'bold', color: '#000' },
+  container: { maxWidth: '980px', margin: '0 auto', paddingBottom: '230px', color: '#000' },
+  hero: { marginBottom: '24px', padding: '38px 26px', borderRadius: '34px', background: 'linear-gradient(135deg, #fff6e6 0%, #eff8dc 100%)', border: '1px solid #e7d8b6', boxShadow: '0 20px 40px rgba(104, 122, 56, 0.12)' },
+  heroBadge: { display: 'inline-flex', padding: '8px 14px', borderRadius: '999px', backgroundColor: '#ffe18d', color: '#6a5103', fontWeight: '900', letterSpacing: '0.08em', marginBottom: '14px' },
+  title: { textAlign: 'center', marginBottom: '12px', color: '#25331c', fontWeight: '900', fontSize: '2.35rem' },
+  subtitle: { textAlign: 'center', color: '#657159', lineHeight: '1.7', maxWidth: '680px', margin: '0 auto' },
+  searchBar: { width: '100%', padding: '15px 18px', borderRadius: '18px', border: '1px solid #e5d8c5', marginBottom: '22px', boxSizing: 'border-box', color: '#2d341f', backgroundColor: '#fffdf8', boxShadow: '0 10px 18px rgba(123, 106, 81, 0.06)' },
+  tabContainer: { display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '16px', flexWrap: 'wrap' },
+  tab: { padding: '10px 16px', border: '1px solid', borderRadius: '999px', cursor: 'pointer', fontWeight: '800', fontSize: '0.9rem' },
+  subTabContainer: { display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '24px', borderBottom: '1px solid #eee0c8', flexWrap: 'wrap' },
+  subTab: { padding: '7px 10px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.84rem', fontWeight: '700' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '14px' },
+  card: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '18px 10px', borderRadius: '22px', border: '2px solid', cursor: 'pointer', boxShadow: '0 12px 24px rgba(92, 86, 67, 0.08)' },
+  icon: { fontSize: '2.2rem', marginBottom: '8px' },
+  name: { fontSize: '0.85rem', fontWeight: '800', color: '#28311f', textAlign: 'center', lineHeight: '1.4' },
+  bottomBar: { position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '980px', background: 'linear-gradient(180deg, #fffdf8 0%, #fff5e8 100%)', padding: '22px', borderRadius: '28px 28px 0 0', boxShadow: '0 -14px 30px rgba(94, 89, 73, 0.12)', border: '1px solid #eddcc0' },
+  bottomBarLabel: { fontSize: '0.76rem', color: '#b1772c', fontWeight: '900', letterSpacing: '0.08em', marginBottom: '12px', textTransform: 'uppercase' },
+  selectedList: { maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' },
+  selectedRow: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '12px' },
+  rowName: { fontSize: '0.96rem', fontWeight: '800', color: '#29331f' },
   qtyControl: { display: 'flex', alignItems: 'center', gap: '8px' },
-  qtyBtn: { width: '25px', height: '25px', borderRadius: '50%', border: '1px solid #ddd', cursor: 'pointer', color: '#000', background: '#fff' },
-  inputWrapper: { display: 'flex', alignItems: 'center', gap: '2px', backgroundColor: '#f9f9f9', padding: '2px 8px', borderRadius: '8px', border: '1px solid #eee' },
-  qtyInput: { width: '50px', border: 'none', background: 'none', textAlign: 'right', fontSize: '0.9rem', fontWeight: 'bold', color: '#000', outline: 'none' },
-  unitText: { fontSize: '0.8rem', color: '#000', fontWeight: 'bold' },
-  seasoningText: { fontSize: '0.85rem', color: '#2c3e50', fontWeight: 'bold' },
-  submitBtn: { width: '100%', padding: '15px', backgroundColor: '#2c3e50', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', marginTop: '10px' }
+  qtyBtn: { width: '28px', height: '28px', borderRadius: '50%', border: '1px solid #dfd1ba', cursor: 'pointer', color: '#2d341f', background: '#fffdf8' },
+  inputWrapper: { display: 'flex', alignItems: 'center', gap: '3px', backgroundColor: '#fff9f0', padding: '4px 10px', borderRadius: '10px', border: '1px solid #e9ddcc' },
+  qtyInput: { width: '56px', border: 'none', background: 'none', textAlign: 'right', fontSize: '0.92rem', fontWeight: '800', color: '#24311e', outline: 'none' },
+  unitText: { fontSize: '0.8rem', color: '#505945', fontWeight: '800' },
+  seasoningText: { fontSize: '0.85rem', color: '#355d35', fontWeight: '900' },
+  submitBtn: { width: '100%', padding: '16px', background: 'linear-gradient(135deg, #355d35 0%, #27492c 100%)', color: '#fff', border: 'none', borderRadius: '16px', fontWeight: '900', marginTop: '14px', boxShadow: '0 14px 24px rgba(53, 93, 53, 0.2)' }
 };
 
 export default AddIngredient;

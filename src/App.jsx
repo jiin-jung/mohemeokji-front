@@ -1,47 +1,60 @@
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import './App.css';
 import Home from './pages/Home';
 import Inventory from './pages/Inventory';
 import AddIngredient from './pages/AddIngredient';
 import Recipe from './pages/Recipe';
+import SavedRecipes from './pages/SavedRecipes';
 
 function App() {
   return (
     <Router>
-      <div style={styles.container}>
-        <nav style={styles.nav}>
-          <Link to="/" style={styles.navLink}>🏠 홈</Link>
-          <Link to="/inventory" style={styles.navLink}>🛒 내 냉장고</Link>
-          <Link to="/add" style={styles.navLink}>➕ 재료 추가</Link>
-          <Link to="/recipe" style={styles.navLink}>🍳 레시피 추천</Link>
-          <Link to="/saved" style={styles.navLink}>📖 보관함</Link>
-        </nav>
+      <div className="app-shell">
+        <header className="app-header">
+          <div className="app-brand">
+            <div className="app-brand-mark">MH</div>
+            <div>
+              <p className="app-brand-title">뭐해? 먹지!</p>
+              <p className="app-brand-subtitle">냉장고를 열면 오늘 식사가 쉬워져요</p>
+            </div>
+          </div>
+        </header>
 
-        <div style={styles.content}>
+        <main className="app-content">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/inventory" element={<Inventory />} />
             <Route path="/add" element={<AddIngredient />} />
             <Route path="/recipe" element={<Recipe />} />
+            <Route path="/saved" element={<SavedRecipes />} />
           </Routes>
-        </div>
+        </main>
+
+        <nav className="app-bottom-nav" aria-label="주요 메뉴">
+          <NavLink to="/" end className={({ isActive }) => `app-bottom-link${isActive ? ' is-active' : ''}`}>
+            <span className="app-bottom-icon icon-home" aria-hidden="true" />
+            <span className="app-bottom-text">홈</span>
+          </NavLink>
+          <NavLink to="/inventory" className={({ isActive }) => `app-bottom-link${isActive ? ' is-active' : ''}`}>
+            <span className="app-bottom-icon icon-fridge" aria-hidden="true" />
+            <span className="app-bottom-text">냉장고</span>
+          </NavLink>
+          <NavLink to="/add" className={({ isActive }) => `app-bottom-link${isActive ? ' is-active' : ''}`}>
+            <span className="app-bottom-icon icon-add" aria-hidden="true" />
+            <span className="app-bottom-text">추가</span>
+          </NavLink>
+          <NavLink to="/recipe" className={({ isActive }) => `app-bottom-link${isActive ? ' is-active' : ''}`}>
+            <span className="app-bottom-icon icon-search" aria-hidden="true" />
+            <span className="app-bottom-text">뭐 해먹지?</span>
+          </NavLink>
+          <NavLink to="/saved" className={({ isActive }) => `app-bottom-link${isActive ? ' is-active' : ''}`}>
+            <span className="app-bottom-icon icon-bookmark" aria-hidden="true" />
+            <span className="app-bottom-text">보관함</span>
+          </NavLink>
+        </nav>
       </div>
     </Router>
   );
 }
-
-const styles = {
-  container: { 
-    fontFamily: '"Pretendard", sans-serif', 
-    backgroundColor: '#fffffd', 
-    color: '#000000', 
-    minHeight: '100vh' 
-  },
-  nav: { 
-    display: 'flex', justifyContent: 'center', gap: '30px', 
-    padding: '20px', backgroundColor: '#2c3e50', position: 'sticky', top: 0, zIndex: 100 
-  },
-  navLink: { color: '#ffffff', textDecoration: 'none', fontWeight: 'bold' },
-  content: { padding: '20px', color: '#000000' }
-};
 
 export default App;
